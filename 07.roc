@@ -2,6 +2,7 @@ app [main] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downlo
 
 import pf.Stdout
 import "inputs/07.txt" as input : Str
+import Utils
 
 allowConcat = Bool.true
 
@@ -11,7 +12,7 @@ result =
         val = Str.toU64? split.before
         operands = Str.splitOn split.after " " |> List.mapTry? Str.toU64
         Ok (val, operands)
-    tryKeepIf? entries \entry -> canBeConstructed entry.0 entry.1
+    Utils.tryKeepIf? entries \entry -> canBeConstructed entry.0 entry.1
     |> List.map \entry -> entry.0
     |> List.sum
     |> Num.toStr
@@ -37,18 +38,6 @@ canBeConstructedWith = \val, accum, operands ->
                 |> Result.try? \newAccum ->
                     canBeConstructedWith val newAccum tail
             Ok (canBeAdded || canBeMultiplied || (allowConcat && canBeConcatenated))
-
-tryKeepIf: List a, (a -> Result Bool b) -> Result (List a) b
-tryKeepIf = \l, predicate ->
-    List.mapTry? l \it ->
-        predicate it
-        |> Result.map \shouldKeep ->
-            if shouldKeep then
-                Ok it
-            else
-                Err it
-    |> List.keepOks \it -> it
-    |> Ok
 
 main =
     Stdout.line! (when result is

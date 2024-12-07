@@ -2,15 +2,13 @@ app [main] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downlo
 
 import pf.Stdout
 import "inputs/04.txt" as input : Str
+import Utils
 
 grid = Str.trim input |> Str.splitOn "\n" |> List.map \line -> Str.toUtf8 line
 
-joinMapWithIndex: List a, (a, U64 -> List b) -> List b
-joinMapWithIndex = \l, mapping -> List.mapWithIndex l mapping |> List.joinMap \it -> it
-
 eachCoordinateWhere: (U8, U64, U64 -> Bool) -> List (U64, U64)
 eachCoordinateWhere = \predicate ->
-    joinMapWithIndex grid \line, y ->
+    Utils.joinMapWithIndex grid \line, y ->
         coordsWithBool = List.mapWithIndex line \a, x -> (predicate a x y, x)
         filteredWithBool = List.keepIf coordsWithBool \(b, _x) -> b
         List.map filteredWithBool \(_b, x) -> (x, y)

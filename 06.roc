@@ -2,6 +2,7 @@ app [main] { pf: platform "https://github.com/roc-lang/basic-cli/releases/downlo
 
 import pf.Stdout
 import "inputs/06.txt" as input : Str
+import Utils
 
 Pos : {x: I64, y: I64}
 Dir : {x: I8, y: I8}
@@ -10,8 +11,8 @@ report =
     lines = Str.splitOn input "\n"
     map = List.mapTry? lines parseLine
     start = findStartPos? lines
-    cyclics = List.countIf (variants map start) \variant -> isCyclic variant (Set.empty {}) (start, {x:0, y:-1})
-#    totalBlocked = stepUntilDone map (Set.empty {} |> Set.insert start, start, {x:0, y:-1})
+    totalBlocked = stepUntilDone map (Set.empty {} |> Set.insert start, start, {x:0, y:-1})
+    cyclics = List.countIf (variants map start totalBlocked) \variant -> isCyclic variant (Set.empty {}) (start, {x:0, y:-1})
 #    "blocked:$(Num.toStr (Set.len totalBlocked))"
     "Cyclics? $(Num.toStr cyclics)"
     |> Ok
@@ -33,16 +34,16 @@ step = \map, (pos, dir) ->
         Free -> Ok (nextPos, dir)
         Blocked -> Ok (pos, {x: -dir.y, y: dir.x})
 
-variants: List (List Bool), Pos -> List (List (List Bool))
-variants = \map, start ->
-    joinMapWithIndex map \row, y ->
-        List.mapWithIndex row \isBlocked, x ->
-            if isBlocked || (y == Num.toU64 start.y && x == Num.toU64 start.x) then
-                Err Nope
-            else
-                List.set map y (List.set row x Bool.true)
-                |> Ok
-        |> List.keepOks \it -> it
+variants: List (List Bool), Pos, Set Pos -> List (List (List Bool))
+variants = \map, start, originalPath ->
+    Set.remove originalPath start
+    |> Set.toList
+    |> List.keepOks \pos ->
+        x = Num.toU64 pos.x
+        y = Num.toU64 pos.y
+        List.get map y
+        |> Result.map \row ->
+            List.set map y (List.set row x Bool.true)
 
 stepUntilDone: List (List Bool), (Set Pos, Pos, Dir) -> Set Pos
 stepUntilDone = \map, (visited, pos, dir) -> when stepAndRemember map (visited, pos, dir) is
@@ -91,8 +92,3 @@ inspectPos = \map, pos ->
     when state is
         Err OutOfBounds -> Outside
         Ok isBlocked -> if isBlocked then Blocked else Free
-
-joinMapWithIndex: List a, (a, U64 -> List b) -> List b
-joinMapWithIndex = \list, mapping ->
-    List.mapWithIndex list mapping
-    |> List.joinMap \it -> it
