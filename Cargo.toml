@@ -5,7 +5,7 @@ edition = "2021"
 
 [[bin]]
 name = "advent-of-code-2024"
-path = "14.rs"
+path = "15.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
