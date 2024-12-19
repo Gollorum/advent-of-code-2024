@@ -4,4 +4,5 @@
 *Zone.Identifier
 .idea/
 /target
+/inputs
 Cargo.lock
